@@ -36,9 +36,9 @@ const mockCourses: Course[] = [
 const HomeScreen: React.FC = () => {
   const handlePlay = (course: Course) => {
     if (course.isLocked) {
-      Alert.alert('Access Denied', 'Please purchase the plan to access this video.');
+      router.push('/SubscriptionPlan'); // navigate to subscription plan screen
     } else {
-      router.push('/video-player');
+      router.push('/video-player'); // go to video player
     }
   };
   
