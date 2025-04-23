@@ -9,11 +9,18 @@ import {
   ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
+import { useSubscription } from './context/SubscriptionContext';
+import { router } from 'expo-router';
 
 const SubscriptionPlan: React.FC = () => {
+  const { setSubscribed } = useSubscription();
+
+
   const handleBuyPlan = () => {
-    Alert.alert('Purchase Successful', 'You have unlocked all courses!');
+    router.push('/PaymentScreen'); // navigate to Razorpay payment screen
   };
+  
 
   return (
     <ImageBackground
@@ -21,7 +28,10 @@ const SubscriptionPlan: React.FC = () => {
       style={styles.backgroundImage}
       resizeMode="cover"
     >
-      <LinearGradient colors={['rgba(10,17,20,0.7)', 'rgba(37,11,25,0.7)']} style={styles.container}>
+      <LinearGradient
+        colors={['rgba(10,17,20,0.7)', 'rgba(37,11,25,0.7)']}
+        style={styles.container}
+      >
         <View style={styles.card}>
           <Image
             source={require('../assets/images/premium.png')}
@@ -41,6 +51,7 @@ const SubscriptionPlan: React.FC = () => {
 };
 
 export default SubscriptionPlan;
+
 
 const styles = StyleSheet.create({
   backgroundImage: {

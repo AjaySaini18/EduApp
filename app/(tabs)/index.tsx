@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, Alert } from
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
+import { useSubscription } from '../context/SubscriptionContext';
 
 
 interface Course {
@@ -34,6 +35,13 @@ const mockCourses: Course[] = [
 ];
 
 const HomeScreen: React.FC = () => {
+  const { isSubscribed } = useSubscription();
+
+  const updatedCourses = mockCourses.map(course => ({
+    ...course,
+    isLocked: isSubscribed ? false : course.isLocked,
+  }));
+
   const handlePlay = (course: Course) => {
     if (course.isLocked) {
       router.push('/SubscriptionPlan'); // navigate to subscription plan screen
@@ -63,7 +71,7 @@ const HomeScreen: React.FC = () => {
     <LinearGradient colors={['#f5f7fa', '#c3cfe2']} style={styles.container}>
       <Text style={styles.header}>🎓 Welcome to EduApp</Text>
       <FlatList
-        data={mockCourses}
+        data={updatedCourses} 
         renderItem={renderCourseItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
