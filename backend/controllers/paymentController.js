@@ -25,18 +25,36 @@ exports.createOrder = async (req, res) => {
 };
 
 // Verify Payment Signature
-exports.verifyPayment = (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+// controllers/paymentController.js
+exports.verifyPayment = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
-  const sign = razorpay_order_id + "|" + razorpay_payment_id;
-  const expectedSign = crypto
-    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-    .update(sign)
-    .digest("hex");
+    // Verify signature
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(sign)
+      .digest("hex");
 
-  if (expectedSign === razorpay_signature) {
-    return res.status(200).json({ success: true, message: "Payment verified" });
-  } else {
-    return res.status(400).json({ success: false, message: "Invalid signature" });
+    if (expectedSign !== razorpay_signature) {
+      return res.status(400).json({ success: false, message: "Invalid signature" });
+    }
+
+    // Payment successful - Implement your unlock logic here
+    // Typically you would:
+    // 1. Save payment details to database
+    // 2. Activate user subscription
+    // 3. Generate access token if needed
+
+    return res.status(200).json({ 
+      success: true, 
+      message: "Payment verified",
+      unlocked: true // Add this flag
+    });
+    
+  } catch (error) {
+    console.error('Verification error:', error);
+    return res.status(500).json({ success: false, error: 'Internal server error' });
   }
 };

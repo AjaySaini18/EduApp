@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
 import axios from 'axios';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSubscription } from './context/SubscriptionContext';
 import { router } from 'expo-router';
 
-type Props = {
-  navigation: NativeStackNavigationProp<any>;
-};
-
-const PaymentScreen: React.FC<Props> = ({ navigation }) => {
+const PaymentScreen: React.FC = () => {
+  const { setSubscribed } = useSubscription();
   const [checkoutHtml, setCheckoutHtml] = useState('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -18,20 +16,12 @@ const PaymentScreen: React.FC<Props> = ({ navigation }) => {
         const { data } = await axios.post('http://192.168.1.12:5001/api/payment/create-order');
 
         const options = {
-          key: 'rzp_test_Kf8fzScnGfUBMN', 
+          key: 'rzp_test_Kf8fzScnGfUBMN',
           amount: data.amount,
           currency: data.currency,
           name: 'EduApp',
           description: 'Premium Course Unlock',
           order_id: data.id,
-          handler: function (response: {
-            razorpay_payment_id: string;
-            razorpay_order_id: string;
-            razorpay_signature: string;
-          }) {
-            console.log('Payment successful:', response);
-            router.push('/'); 
-          },
           prefill: {
             name: 'Ajay Saini',
             email: 'ajay@example.com',
@@ -64,7 +54,10 @@ const PaymentScreen: React.FC<Props> = ({ navigation }) => {
         `;
 
         setCheckoutHtml(htmlContent);
+        setLoading(false);
       } catch (err) {
+        setLoading(false);
+        Alert.alert('Error', 'Failed to initialize payment');
         console.error('Order fetch failed', err);
       }
     };
@@ -72,15 +65,38 @@ const PaymentScreen: React.FC<Props> = ({ navigation }) => {
     fetchOrder();
   }, []);
 
-  const handlePaymentResponse = (event: any) => {
-    const response = JSON.parse(event.nativeEvent.data);
-    console.log('Razorpay response:', response);
-    // You can also verify on backend here
-    router.push('/');;
+  const handlePaymentResponse = async (event: any) => {
+    try {
+      const response = JSON.parse(event.nativeEvent.data);
+      
+      const verification = await axios.post(
+        'http://192.168.1.12:5001/api/payment/verify-payment',
+        {
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_signature: response.razorpay_signature
+        }
+      );
+
+      if (verification.data.success) {
+        setSubscribed(true);
+        Alert.alert('Success', 'Payment verified! Enjoy premium content');
+        router.replace('/');
+      } else {
+        Alert.alert('Error', 'Payment verification failed');
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      Alert.alert('Error', 'Payment verification failed');
+    }
   };
 
-  if (!checkoutHtml) {
-    return <ActivityIndicator size="large" color="#000" />;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
   }
 
   return (
@@ -90,6 +106,7 @@ const PaymentScreen: React.FC<Props> = ({ navigation }) => {
       javaScriptEnabled
       domStorageEnabled
       onMessage={handlePaymentResponse}
+      onError={() => Alert.alert('Error', 'Failed to load payment gateway')}
     />
   );
 };
