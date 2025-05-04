@@ -1,10 +1,13 @@
-import { Stack } from 'expo-router';
-import { SubscriptionProvider } from './context/SubscriptionContext';
+import { Slot } from 'expo-router';
+import { AuthProvider } from './context/AuthContext';
+import SubscriptionProvider from './context/SubscriptionContext';
 
 export default function RootLayout() {
   return (
-    <SubscriptionProvider>
-      <Stack screenOptions={{ headerShown: false }} />
-    </SubscriptionProvider>
+    <AuthProvider>
+      <SubscriptionProvider>
+        <Slot />
+      </SubscriptionProvider>
+    </AuthProvider>
   );
 }

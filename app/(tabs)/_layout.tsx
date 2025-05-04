@@ -1,19 +1,23 @@
-import { Slot } from 'expo-router';
+import { Slot, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import LoadingScreen from '../LoadingScreen';
+import { useAuth } from '../context/AuthContext';
 
 const Layout = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
+    if (!loading && !user) {
+      // Wait until layout has mounted
+      setTimeout(() => {
+        router.replace('/login');
+      }, 0);
+    }
+  }, [loading, user]);
 
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
+  // While auth is loading OR redirecting, don't render anything
+  if (loading || (!loading && !user)) {
     return <LoadingScreen />;
   }
 
